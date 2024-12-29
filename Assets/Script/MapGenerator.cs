@@ -1,7 +1,11 @@
+using System.Security;
 using UnityEngine;
 
 public class MapGenerator : MonoBehaviour
 {
+    public enum DrawMode { NoiseMap, ColourMap };
+    public DrawMode drawMode;
+
     [SerializeField] private int _mapWidth;
     [SerializeField] private int _mapHeight;
     [SerializeField] private int _seed;
@@ -12,6 +16,7 @@ public class MapGenerator : MonoBehaviour
     [Range(0, 1)]
     [SerializeField] private float _persistence;
     [SerializeField] private bool _autoUpdate;
+    [SerializeField] private TerrainType[] _regions;
 
     public bool AutoUpdate
     {
@@ -23,8 +28,33 @@ public class MapGenerator : MonoBehaviour
     {
         float[,] noiseMap = Noise.GenerateNoiseMap(_mapWidth, _mapHeight, _seed, _noiseScale, _octaves, _persistence, _lucunarity, _offset);
 
+        Color[] colourMap = new Color[_mapWidth * _mapHeight];
+        for (int y = 0; y < _mapHeight; y++)
+        {
+            for (int x = 0; x < _mapWidth; x++)
+            {
+                float currentHeight = noiseMap[x, y];
+
+                for (int i = 0; i < _regions.Length; i++)
+                {
+                    if (currentHeight > _regions[i].Height)
+                    {
+                        colourMap[y * _mapWidth + x] = _regions[i].Color;
+                    }
+                }
+            }
+        }
+
         MapDisplay display = FindFirstObjectByType<MapDisplay>();
-        display.DrawNoiseMap(noiseMap);
+
+        if (drawMode == DrawMode.NoiseMap)
+        {
+            display.DrawTexture(TextureGenerator.TextureFromHeightMap(noiseMap));
+        }
+        else if (drawMode == DrawMode.ColourMap)
+        {
+            display.DrawTexture(TextureGenerator.TextureFromColourMap(colourMap, _mapWidth, _mapHeight));
+        }
     }
 
     void OnValidate()
@@ -49,4 +79,12 @@ public class MapGenerator : MonoBehaviour
             _octaves = 0;
         }
     }
+}
+
+[System.Serializable]
+public struct TerrainType
+{
+    public string Name;
+    public float Height;
+    public Color Color;
 }
