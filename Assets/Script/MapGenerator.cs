@@ -4,8 +4,7 @@ using UnityEngine;
 public class MapGenerator : MonoBehaviour
 {
     public enum DrawMode { NoiseMap, ColourMap };
-    public DrawMode drawMode;
-
+    [SerializeField] private DrawMode _drawMode;
     [SerializeField] private int _mapWidth;
     [SerializeField] private int _mapHeight;
     [SerializeField] private int _seed;
@@ -37,9 +36,10 @@ public class MapGenerator : MonoBehaviour
 
                 for (int i = 0; i < _regions.Length; i++)
                 {
-                    if (currentHeight > _regions[i].Height)
+                    if (currentHeight <= _regions[i].Height)
                     {
                         colourMap[y * _mapWidth + x] = _regions[i].Color;
+                        break;
                     }
                 }
             }
@@ -47,11 +47,11 @@ public class MapGenerator : MonoBehaviour
 
         MapDisplay display = FindFirstObjectByType<MapDisplay>();
 
-        if (drawMode == DrawMode.NoiseMap)
+        if (_drawMode == DrawMode.NoiseMap)
         {
             display.DrawTexture(TextureGenerator.TextureFromHeightMap(noiseMap));
         }
-        else if (drawMode == DrawMode.ColourMap)
+        else if (_drawMode == DrawMode.ColourMap)
         {
             display.DrawTexture(TextureGenerator.TextureFromColourMap(colourMap, _mapWidth, _mapHeight));
         }
